@@ -40,29 +40,28 @@ int readf(FILE *fp)
 	return 0;
 }
 
+// Function to count substrings for a specific thread
 int num_substring(int t)
 {
-//add your logic here
-//1, how to distribute different parts of string s1 into different threads
-//2, how to sum up the total number of substring from all threads
-	int start = thread_id * (n1 / NUM_THREADS);  // Starting index for this thread
-		int end = (thread_id + 1) * (n1 / NUM_THREADS);  // Ending index (exclusive)
+    int segment_size = n1 / NUM_THREADS;
+    int start = t * segment_size;
+    int end = (t == NUM_THREADS - 1) ? n1 - n2 : (t + 1) * segment_size - n2;
+    int count = 0;
 
-		int count = 0;
-		for (int i = start; i < end; i++) {
-			int j = i, k = 0;
-			while (k < n2 && *(s1+j) == *(s2+k)) {
-				j++;
-				k++;
-				if (k == n2) {
-					count++;  // Found a substring
-				}
-			}
-		}
+    for (int i = start; i <= end; i++)
+    {
+        int j;
+        for (j = 0; j < n2; j++)
+        {
+            if (s1[i + j] != s2[j])
+                break;
+        }
+        if (j == n2)
+            count++;
+    }
 
-		return count;
+    return count;
 }
-
 void *calSubStringThread(void *threadid){
     long tid = (long)threadid;
     printf("This is thread %ld, ", tid);
