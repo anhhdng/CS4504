@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
  	printf("The number of substrings is: %d\n", totalNum);
 	return 1;
 }
-
+https://kevinsuo.github.io/teaching/2023Fall/3502/Project/project2.pdf
 
 
 
