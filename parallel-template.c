@@ -96,7 +96,66 @@ int main(int argc, char *argv[])
 
 
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
 
+#define NUM_THREADS 10
+
+char *s1;
+char *s2;
+int n1,n2;
+
+pthread_mutex_t mutex;
+pthread_t threads[NUM_THREADS];
+int thread_id[NUM_THREADS];
+int count_for_each_thread[NUM_THREADS];
+
+void *count(void *arg) {
+    int start = *(int*)(arg);
+    // start is the starting point for that index
+    for(int i=start;i<n1;i+=NUM_THREADS){ 
+        if(i+n2-1>=n1){
+            break;
+        }
+        int flag = 0;
+        for(int j=0;j<n2;j++){ // the inner loop just checks whether the substring of length n2 starting from index i is equal to s2
+            if(s1[i+j]!=s2[j]){
+                flag = 1;
+                break;
+            }
+        }
+        if(!flag){
+            // if an equal substring is found increment the count for that thread
+            count_for_each_thread[start]++;
+        }
+    } 
+}
+
+int main(int argc, char *argv[]) {
+    // input is taken from user.
+    scanf("%d %d",&n1,&n2);
+    s1 = (char *)malloc(n1*sizeof(char)+1);
+    s2 = (char *)malloc(n2*sizeof(char)+1);
+    scanf("%s",s1); 
+    scanf("%s",s2);
+    pthread_mutex_init(&mutex, NULL);
+    for(int i=0;i<NUM_THREADS;i++){
+        thread_id[i]=i;
+    }
+    for (int i = 0; i < 10; i++) {
+        pthread_create(&threads[i], NULL, count, &thread_id[i]);
+    }
+    for (int i = 0; i < 10; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    int sum = 0;
+    for(int i=1;i<=10;i++){
+        printf("The number of substrings thread %d find is %d\n",i,count_for_each_thread[i-1]);
+        sum+=count_for_each_thread[i-1];
+    }
+    printf("Total substrings is %d\n", sum);
+}
 
 
 
