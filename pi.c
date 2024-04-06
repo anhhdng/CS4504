@@ -36,8 +36,19 @@ int main(int argc, char* argv[]) {
 
     pi = step * sum; // Local estimate
 
+    // Allocate a separate buffer for receiving the reduced value
+    double reduced_pi;
+
+    // Use a temporary variable for the local estimate during reduction
+    double temp = step * sum;
+
     // Reduce partial sums from all processes to get the final PI
-    MPI_Reduce(&pi, &pi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&temp, &reduced_pi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    // Assign the reduced value back to pi if this is the root process
+    if (rank == 0) {
+        pi = reduced_pi;
+    }
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
