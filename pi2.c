@@ -8,7 +8,6 @@
 int main(int argc, char* argv[]) {
     int rank, size;
     double step, x, sum = 0.0, pi;
-    double* local_pi;
     struct timespec start, end;
     u_int64_t diff;
 
@@ -28,9 +27,6 @@ int main(int argc, char* argv[]) {
     int local_start = rank * (NUM_STEPS / size);
     int local_end = (rank == size - 1) ? NUM_STEPS : (rank + 1) * (NUM_STEPS / size);
 
-    // Allocate memory for local PI estimate
-    local_pi = (double*)malloc(sizeof(double));
-
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     for (int i = local_start; i < local_end; i++) {
@@ -38,6 +34,31 @@ int main(int argc, char* argv[]) {
         sum += 4.0 / (1.0 + x * x);
     }
 
-    *local_pi = step * sum; // Local estimate
+    pi = step * sum; // Local estimate
 
-    clock
+    // Allocate a separate buffer for receiving the reduced value
+    double reduced_pi;
+
+    // Use a temporary variable for the local estimate during reduction
+    double temp = step * sum;
+
+    // Reduce partial sums from all processes to get the final PI
+    MPI_Reduce(&temp, &reduced_pi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    // Assign the reduced value back to pi if this is the root process
+    if (rank == 0) {
+        pi = reduced_pi;
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    diff = 1000000000L * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+
+    if (rank == 0) {
+        printf("PI is %.20f\n", pi);
+        printf("Elapsed time = %llu nanoseconds\n", (long long unsigned int)diff);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
