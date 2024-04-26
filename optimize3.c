@@ -4,28 +4,32 @@
 #include <stdlib.h>
 
 #define N 2048
-#define BLOCK_SIZE 32
+#define BlockSize 64
 #define FactorIntToDouble 1.1
 
-void matrixMultiBlock(double **firstMatrix, double **secondMatrix, double **matrixMultiResult, int N)
+double firstMatrix[N][N] = {0.0};
+double secondMatrix[N][N] = {0.0};
+double matrixMultiResult[N][N] = {0.0};
+
+void matrixMultiBlock()
 {
     #pragma omp parallel for collapse(2)
-    for (int i = 0; i < N; i += BLOCK_SIZE)
+    for (int bi = 0; bi < N; bi += BlockSize)
     {
-        for (int j = 0; j < N; j += BLOCK_SIZE)
+        for (int bj = 0; bj < N; bj += BlockSize)
         {
-            for (int k = 0; k < N; k += BLOCK_SIZE)
+            for (int bk = 0; bk < N; bk += BlockSize)
             {
-                for (int ii = i; ii < i + BLOCK_SIZE; ii++)
+                for (int i = bi; i < bi + BlockSize; i++)
                 {
-                    for (int jj = j; jj < j + BLOCK_SIZE; jj++)
+                    for (int j = bj; j < bj + BlockSize; j++)
                     {
-                        double sum = 0.0;
-                        for (int kk = k; kk < k + BLOCK_SIZE; kk++)
+                        double resultValue = 0;
+                        for (int k = bk; k < bk + BlockSize; k++)
                         {
-                            sum += firstMatrix[ii][kk] * secondMatrix[kk][jj];
+                            resultValue += firstMatrix[i][k] * secondMatrix[k][j];
                         }
-                        matrixMultiResult[ii][jj] += sum;
+                        matrixMultiResult[i][j] += resultValue;
                     }
                 }
             }
@@ -33,7 +37,7 @@ void matrixMultiBlock(double **firstMatrix, double **secondMatrix, double **matr
     }
 }
 
-void matrixInit(double **firstMatrix, double **secondMatrix, int N)
+void matrixInit()
 {
     #pragma omp parallel for collapse(2)
     for (int row = 0; row < N; row++)
@@ -49,35 +53,12 @@ void matrixInit(double **firstMatrix, double **secondMatrix, int N)
 
 int main()
 {
-    double **firstMatrix = malloc(N * sizeof(double *));
-    double **secondMatrix = malloc(N * sizeof(double *));
-    double **matrixMultiResult = malloc(N * sizeof(double *));
-
-    for (int i = 0; i < N; i++)
-    {
-        firstMatrix[i] = malloc(N * sizeof(double));
-        secondMatrix[i] = malloc(N * sizeof(double));
-        matrixMultiResult[i] = malloc(N * sizeof(double));
-    }
-
-    matrixInit(firstMatrix, secondMatrix, N);
+    matrixInit();
 
     clock_t t1 = clock();
-    matrixMultiBlock(firstMatrix, secondMatrix, matrixMultiResult, N);
+    matrixMultiBlock();
     clock_t t2 = clock();
-
-    printf("Block-optimized parallel time for N=%d: %.3f seconds\n", N, (double)(t2 - t1) / CLOCKS_PER_SEC);
-
-    // Free memory
-    for (int i = 0; i < N; i++)
-    {
-        free(firstMatrix[i]);
-        free(secondMatrix[i]);
-        free(matrixMultiResult[i]);
-    }
-    free(firstMatrix);
-    free(secondMatrix);
-    free(matrixMultiResult);
+    printf("time: %ld\n", t2 - t1);
 
     return 0;
 }
