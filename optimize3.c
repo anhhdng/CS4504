@@ -20,12 +20,12 @@ void matrixMultiBlock()
         {
             for (int bk = 0; bk < N; bk += BlockSize)
             {
-                for (int i = bi; i < bi + BlockSize; i++)
+                for (int i = bi; i < bi + BlockSize && i < N; i++)
                 {
-                    for (int j = bj; j < bj + BlockSize; j++)
+                    for (int j = bj; j < bj + BlockSize && j < N; j++)
                     {
                         double resultValue = 0;
-                        for (int k = bk; k < bk + BlockSize; k++)
+                        for (int k = bk; k < bk + BlockSize && k < N; k++)
                         {
                             resultValue += firstMatrix[i][k] * secondMatrix[k][j];
                         }
